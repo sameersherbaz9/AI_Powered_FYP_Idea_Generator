@@ -4,15 +4,6 @@ const nodemailer = require('nodemailer');
  * Shared SMTP transporter, created lazily on first use and reused for every
  * subsequent email. Avoids paying for a new TCP/TLS handshake (and a
  * transporter.verify() round-trip) on every single send.
- *
- * NOTE: Gmail SMTP from cloud hosts (Render, Heroku, Railway, etc.) is
- * unreliable — Google's anti-spam systems can silently drop connections
- * from data-center IPs regardless of these settings, independent of your
- * credentials. The changes below (port 587, forced IPv4, short timeouts)
- * are best-effort mitigations, not a guarantee. If this keeps timing out
- * after redeploying, that confirms it's an IP-level block on Google's side,
- * not a config problem, and the real fix is moving to an HTTP-based email
- * API (Resend/SendGrid/Brevo) instead of SMTP.
  */
 let transporter = null;
 let verified = false;
@@ -25,13 +16,8 @@ const getTransporter = async () => {
   if (!transporter) {
     transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      family: 4, // Force IPv4 — some hosts resolve Gmail's IPv6 address, which never responds, causing a hang instead of a fast failure
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 15000,
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_APP_PASSWORD
@@ -63,7 +49,7 @@ const getTransporter = async () => {
 /**
  * Sends a 6-digit OTP verification email to a CUST student.
  *
- * Uses Gmail SMTP over STARTTLS (port 587) with an App Password.
+ * Uses Gmail SMTP over SSL (port 465) with an App Password.
  * Generate an App Password at: Google Account → Security → 2-Step Verification → App Passwords.
  *
  * @param {string} toEmail - Recipient email (must be @cust.pk)
