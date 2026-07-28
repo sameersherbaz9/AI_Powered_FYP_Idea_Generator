@@ -80,6 +80,7 @@ const authController = require('./controllers/authController');
 const WebSocketServer = require('./websocket');
 
 const app = express();
+app.set('trust proxy', 1); // Render sits behind exactly 1 proxy hop — trust only that hop, not the full chain
 const server = require('http').createServer(app);
 const wss = new WebSocketServer(server);
 
