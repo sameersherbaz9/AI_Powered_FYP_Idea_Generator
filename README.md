@@ -13,9 +13,9 @@ student's own semester project history.
 real-time updates.
 
 **Backend** — Node.js / Express, MySQL (via `mysql2`), JWT auth,
-`bcrypt` for password hashing, `ws` for the WebSocket server, Nodemailer
-(Gmail SMTP) for OTP and password-reset emails, Groq API for AI idea
-generation.
+`bcrypt` for password hashing, `ws` for the WebSocket server, Brevo's
+transactional email API (via `axios`) for OTP and password-reset emails,
+Groq API for AI idea generation.
 
 ## Project structure
 
@@ -42,8 +42,11 @@ generation.
 - Node.js 18+ and npm
 - MySQL 8+ (or MariaDB) running locally or accessible remotely
 - A [Groq API key](https://console.groq.com)
-- A Gmail account with a 2-Step-Verification **App Password** (not your
-  regular Gmail password) for sending OTP/reset emails
+- A free [Brevo](https://www.brevo.com/) account with a verified sender
+  and an API key, for sending OTP/reset emails. Brevo is used instead of
+  Gmail SMTP because most cloud hosts (including Render's free tier)
+  block outbound SMTP ports — Brevo sends over HTTPS instead, which is
+  never blocked.
 
 ## Setup
 
@@ -65,10 +68,12 @@ cp .env.example .env
 ```
 
 Edit `backend/.env` and fill in:
+
 - `DB_HOST` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` — your MySQL credentials
 - `JWT_SECRET` — a long random string (e.g. `openssl rand -base64 48`)
 - `GROQ_API_KEY` — from console.groq.com
-- `EMAIL_USER` / `EMAIL_APP_PASSWORD` — your Gmail address and App Password
+- `BREVO_API_KEY` — from Brevo → SMTP & API → API Keys
+- `BREVO_FROM_EMAIL` — the sender address you verified in Brevo
 - `FRONTEND_URL` — where the frontend will run (default `http://localhost:3000`)
 
 Start the backend:
@@ -106,8 +111,9 @@ The app runs on `http://localhost:3000`.
 ### 4. Sign up
 
 Registration requires a `@cust.pk` email address (enforced server-side)
-and sends a 6-digit OTP to that address, so the email credentials in
-`backend/.env` must be working before you can create an account.
+and sends a 6-digit OTP to that address, so `BREVO_API_KEY` and
+`BREVO_FROM_EMAIL` in `backend/.env` must be working before you can
+create an account.
 
 ## Available scripts
 
@@ -120,6 +126,7 @@ and sends a 6-digit OTP to that address, so the email credentials in
 
 The backend rate-limits several endpoints per IP to protect against abuse
 and to stay within the Groq free-tier quota:
+
 - Login: 10 attempts / 15 min
 - OTP requests: 5 / 15 min
 - Password reset requests: 5 / 15 min
