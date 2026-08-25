@@ -12,7 +12,7 @@ const fetchLiveTrends = async (department) => {
     const response = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         messages: [
           { role: 'system', content: 'You are a technology trends analyst. Respond only with a comma-separated list of trends, no extra text, no numbering, no explanation.' },
           { role: 'user', content: `List the top 8 cutting-edge technology trends in 2026 for ${department} students doing their Final Year Project. Focus on trends currently adopted in industry in 2026.` }
@@ -67,7 +67,7 @@ Make all 4 ideas distinct from each other.`;
       const response = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
         {
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           response_format: { type: 'json_object' },
           messages: [
             {
@@ -217,7 +217,7 @@ Make all 4 ideas distinct from each other.`;
       const response = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
         {
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages,
           temperature: 0.7,
           max_tokens: 1000
