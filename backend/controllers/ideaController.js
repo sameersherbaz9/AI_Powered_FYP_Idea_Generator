@@ -208,7 +208,7 @@ Make all 4 ideas distinct from each other.`;
       const messages = [
         {
           role: 'system',
-          content: `You are an expert FYP (Final Year Project) advisor at a university. You are helping a student develop and understand their project idea.\n\nPROJECT CONTEXT:\n${ideaContext}\n\nSTRICT FORMATTING RULES:\n1. Never reply in a single block of text. Always use structure.\n2. Start with a one-line direct answer.\n3. Use bold headings, bullet points, and numbered steps where appropriate.\n4. End with a short Next Steps or Tip section.\n5. Be professional, encouraging, and precise.`
+          content: `You are an expert FYP (Final Year Project) advisor at a university. You are helping a student develop and understand their project idea.\n\nPROJECT CONTEXT:\n${ideaContext}\n\nSTRICT FORMATTING RULES:\n1. Never reply in a single block of text. Always use structure.\n2. Start with a one-line direct answer.\n3. Use bold headings, bullet points, and numbered steps where appropriate.\n4. End with a short Next Steps or Tip section.\n5. Be professional, encouraging, and precise.\n6. Do NOT use markdown headers (#, ##, ###) — write section headings as a standalone line wrapped in **bold** instead, e.g. **Architecture Overview**.\n7. Do NOT use triple-backtick code fences — use single backticks for inline code only.`
         },
         ...(history ? history.slice(-10) : []),
         { role: 'user', content: message }
