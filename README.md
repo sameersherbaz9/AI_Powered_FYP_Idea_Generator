@@ -131,3 +131,16 @@ and to stay within the Groq free-tier quota:
 - OTP requests: 5 / 15 min
 - Password reset requests: 5 / 15 min
 - AI idea generation: 20 / hour (each generation makes 2 Groq API calls)
+
+## Deployment
+
+Live stack: **Vercel** (frontend), **Render** (backend, free tier),
+**Aiven** (managed MySQL).
+
+### Keeping the backend awake on Render's free tier
+
+Render's free tier spins the backend down after ~15 minutes of no
+traffic, causing a 30–50s cold-start delay on the next request. To avoid
+this, [UptimeRobot](https://uptimerobot.com/) is configured to ping the
+backend's `GET /api/health` endpoint every 10 minutes, which keeps the
+instance warm around the clock so the app never falls asleep on visitors.
