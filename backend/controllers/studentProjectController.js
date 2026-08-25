@@ -363,22 +363,22 @@ Generate exactly 4 highly relevant, innovative, and unique Final Year Project (F
 - Incorporate at least one of the latest 2026 trends listed above
 - Are diverse from each other (different problem domains)
 
-Please format each idea STRICTLY as follows:
+Format the output strictly as a JSON object with a single "ideas" array containing exactly 4 objects.
+Each object must have the following keys:
+- "title" (string)
+- "description" (string, 2-3 sentences)
+- "technologies" (string, comma-separated)
+- "difficulty" (string, either Beginner, Intermediate, or Advanced)
+- "why" (string, why this fits this specific student's background and CGPA)
+- "trendUsed" (string, which 2026 trend this idea incorporates)
 
-Idea X:
-Title: [Project Title]
-Description: [Detailed Description (2-3 sentences)]
-Technologies: [Comma separated technologies]
-Difficulty: [Beginner/Intermediate/Advanced]
-Why: [Why this fits this specific student's background and CGPA]
-Trend Used: [Which 2026 trend this idea incorporates]
-
-Make all 4 ideas clearly distinct. Ideas should get progressively more complex.`;
+Make all 4 ideas clearly distinct. Ideas should get progressively more complex. Return ONLY the JSON object, no extra commentary.`;
 
       const response = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
         {
           model: 'openai/gpt-oss-120b',
+          response_format: { type: 'json_object' },
           messages: [
             {
               role: 'system',
@@ -401,7 +401,7 @@ Make all 4 ideas clearly distinct. Ideas should get progressively more complex.`
       );
 
       const aiResponse = response.data.choices[0].message.content;
-      const ideas = parseGroqResponse(aiResponse, projects);
+      const ideas = parseGroqJsonResponse(aiResponse, projects);
 
       res.json({
         success: true,
@@ -427,14 +427,14 @@ Make all 4 ideas clearly distinct. Ideas should get progressively more complex.`
 };
 
 /**
- * Parses the Groq AI response into a structured array of idea objects.
- * Handles Markdown bold formatting that Groq may include in section headers.
- * Falls back to a single raw idea object if parsing yields no results.
+ * Parses the Groq AI response, expecting a JSON object with an "ideas" array
+ * (model is called with response_format: json_object). Falls back to the
+ * legacy text-pattern parser if JSON parsing fails or yields no ideas.
  * @param {string} content - Raw AI response
  * @param {Array} projects - Student's past projects (used for tech fallback)
  * @returns {Array} Parsed idea objects (max 4)
  */
-function parseGroqResponse(content, projects) {
+function parseGroqJsonResponse(content, projects) {
   const allTechs = projects
     .flatMap(p => [
       ...(p.languages ? p.languages.split(',') : []),
@@ -442,6 +442,39 @@ function parseGroqResponse(content, projects) {
       ...(p.backend_frameworks ? p.backend_frameworks.split(',') : [])
     ].map(t => t.trim()).filter(Boolean));
 
+  try {
+    const parsed = JSON.parse(content);
+    const rawIdeas = Array.isArray(parsed.ideas) ? parsed.ideas : [];
+    if (rawIdeas.length > 0) {
+      return rawIdeas.slice(0, 4).map((idea, index) => ({
+        id: `groq-${index + 1}`,
+        title: idea.title || `Idea ${index + 1}`,
+        description: idea.description || '',
+        technologies: idea.technologies || allTechs.slice(0, 3).join(', '),
+        difficulty: idea.difficulty || 'Intermediate',
+        why: idea.why || '',
+        trendUsed: idea.trendUsed || '',
+        category: 'AI-Generated',
+        source: 'groq'
+      }));
+    }
+  } catch (err) {
+    console.error('JSON parse of Groq response failed, falling back to text parser:', err.message);
+  }
+
+  return parseGroqTextResponse(content, projects, allTechs);
+}
+
+/**
+ * Legacy fallback parser for plain-text "Idea X: Title: ..." formatted
+ * responses. Only used if JSON parsing above fails (e.g. model ignores
+ * response_format). Handles Markdown bold formatting in section headers.
+ * @param {string} content - Raw AI response
+ * @param {Array} projects - Student's past projects (used for tech fallback)
+ * @param {Array} allTechs - Precomputed tech list from projects
+ * @returns {Array} Parsed idea objects (max 4)
+ */
+function parseGroqTextResponse(content, projects, allTechs) {
   const ideas = [];
   const sections = content.split(/\*{0,2}(?:Idea|Project)\s*\d+[:.]\*{0,2}/i).slice(1);
 
