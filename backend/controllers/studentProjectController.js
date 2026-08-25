@@ -49,7 +49,7 @@ const fetchLiveTrends = async (department) => {
     const response = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         messages: [
           {
             role: 'system',
@@ -378,7 +378,7 @@ Make all 4 ideas clearly distinct. Ideas should get progressively more complex.`
       const response = await axios.post(
         'https://api.groq.com/openai/v1/chat/completions',
         {
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           messages: [
             {
               role: 'system',
