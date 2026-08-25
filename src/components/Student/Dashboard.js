@@ -13,13 +13,46 @@ const MarkdownMessage = ({ content }) => {
   const lines = content.split('\n');
   const elements = [];
   let key = 0;
+  let inCodeBlock = false;
+  let codeBlockLines = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
+    // Fenced code block: ```...```
+    if (line.trim().startsWith('```')) {
+      if (inCodeBlock) {
+        elements.push(
+          <pre key={key++} className="bg-black/40 text-cyan-300 p-3 rounded-lg text-xs font-mono overflow-x-auto my-1 whitespace-pre-wrap">
+            <code>{codeBlockLines.join('\n')}</code>
+          </pre>
+        );
+        codeBlockLines = [];
+        inCodeBlock = false;
+      } else {
+        inCodeBlock = true;
+      }
+      continue;
+    }
+    if (inCodeBlock) {
+      codeBlockLines.push(line);
+      continue;
+    }
+
     // Skip empty lines but add spacing
     if (line.trim() === '') {
       elements.push(<div key={key++} className="h-2" />);
+      continue;
+    }
+
+    // Markdown header: "#", "##", "###" text
+    if (/^#{1,6}\s+.+/.test(line.trim())) {
+      const text = line.trim().replace(/^#{1,6}\s+/, '');
+      elements.push(
+        <p key={key++} className="font-bold text-white mt-3 mb-1 text-sm uppercase tracking-wide">
+          {renderInline(text)}
+        </p>
+      );
       continue;
     }
 
@@ -64,6 +97,15 @@ const MarkdownMessage = ({ content }) => {
       <p key={key++} className="my-0.5 leading-relaxed">
         {renderInline(line)}
       </p>
+    );
+  }
+
+  // Flush an unterminated code block (model didn't close the fence)
+  if (inCodeBlock && codeBlockLines.length > 0) {
+    elements.push(
+      <pre key={key++} className="bg-black/40 text-cyan-300 p-3 rounded-lg text-xs font-mono overflow-x-auto my-1 whitespace-pre-wrap">
+        <code>{codeBlockLines.join('\n')}</code>
+      </pre>
     );
   }
 
